@@ -22,9 +22,7 @@ local DefaultConfig = {
 --- @param config Marker.config | nil
 M.setup = function(config)
   -- If the config isn't defined we can use the default one
-  if config == nil then
-    config = DefaultConfig
-  end
+  config = vim.tbl_deep_extend("force", DefaultConfig, config or {})
   vim.api.nvim_create_augroup("Marker", { clear = true })
 
   vim.api.nvim_set_hl(0, "MarkerMark", config.highlight_style)
