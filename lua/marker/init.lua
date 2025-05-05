@@ -1,71 +1,33 @@
+--- A friendly NeoVim plugin that shows were marks are.
+--- @module Marker
 local M = {}
 
---- Creates signs for every mark in the file and places them.
---- @param buffer_id number The Vim buffer ID that you wish to search for marks in
-local display_mark_signs = function(buffer_id)
-  vim.fn.sign_unplace("MarkerMarks", { buffer = buffer_id })
-  local marks = vim.fn.getmarklist(buffer_id)
+local signs = require("marker.signs")
 
-  --- @param mark vim.fn.getmarklist.ret.item
-  for i, mark in ipairs(marks) do
-    --- @type string
-    local mark_name = mark.mark
+--- @class Marker.config Configuration for marker.nvim
+--- @field highlight_style vim.api.keyset.highlight The Vim highlight group used to highlight marks.
+--- @field mark_regex string Used to specify which marks are shown with signs.
+local DeafultConfig = {
+  --- By default we want all marks that are alphabetical to show up...
+  --- @see https://www.lua.org/pil/20.2.html
+  mark_regex = "%a",
+  highlight_style = {
+    bg = "#8ecae6",
+    fg = nil,
+    bold = false,
+    italic = true,
+  },
+}
 
-    if string.find(mark_name, "%a") == nil then
-      return
-    end
-
-    --- Register a sign for each mark in the file
-    vim.fn.sign_define("MarkerMark_" .. mark_name, {
-      text = string.sub(mark_name, 2, 2),
-      texthl = "IncSearch",
-    })
-
-    vim.fn.sign_place(
-      i,
-      "MarkerMarks",
-      "MarkerMark_" .. mark_name,
-      buffer_id,
-      { lnum = mark.pos[2] }
-    )
+--- @param config Marker.config | nil
+M.setup = function(config)
+  -- If the config isn't defined we can use the default one
+  if config == nil then
+    config = DeafultConfig
   end
-end
-
---- Removed all placed signs and generated sign types.
---- @param buffer_id integer the id of the buffer to clean up marks from
-local cleanup_mark_signs = function(buffer_id)
-  vim.fn.sign_unplace("MarkerMarks", { buffer = buffer_id })
-  -- Remove all MarkerMark signs
-  for _, sign in ipairs(vim.fn.sign_getdefined()) do
-    if string.find(sign.name, "^MarkerMark_") ~= nil then
-      vim.fn.sign_undefine(sign.name)
-    end
-  end
-end
-
-local delete_marks_command = function()
-  vim.notify("Enter a mark to delete: ", 1)
-  local ok, char = pcall(vim.fn.getcharstr)
-  if not ok or char == "\027" then
-    vim.notify("") -- Clear the line to remove the prompt
-    return
-  end
-
-  -- Validate input
-  if #char ~= 1 then
-    vim.notify("Invalid mark name", vim.log.levels.ERROR)
-    return
-  end
-
-  local buffer = vim.api.nvim_get_current_buf()
-
-  vim.api.nvim_buf_del_mark(buffer, char)
-  vim.notify("Deleted mark '" .. char)
-  display_mark_signs(buffer)
-end
-
-M.setup = function()
   vim.api.nvim_create_augroup("Marker", { clear = true })
+
+  vim.api.nvim_set_hl(0, "MarkerMark", config.highlight_style)
 
   -- Create/update signs
   vim.api.nvim_create_autocmd(
@@ -73,7 +35,7 @@ M.setup = function()
     {
       group = "Marker",
       callback = function(args)
-        display_mark_signs(args.buf)
+        signs.display_mark_signs(args.buf, config)
       end,
     }
   )
@@ -82,33 +44,13 @@ M.setup = function()
   vim.api.nvim_create_autocmd("BufWipeout", {
     group = "Marker",
     callback = function(args)
-      cleanup_mark_signs(args.buf)
+      signs.cleanup_mark_signs(args.buf)
     end,
   })
 
-  require("which-key").add({
-    {
-      "<leader>xc",
-      function()
-        display_mark_signs(vim.api.nvim_get_current_buf())
-      end,
-      desc = "Test Create",
-      icon = "󰙨",
-    },
-  })
-
-  require("which-key").add({
-    {
-      "<leader>xr",
-      function()
-        cleanup_mark_signs(vim.api.nvim_get_current_buf())
-      end,
-      desc = "Test Remove",
-      icon = "󰙨",
-    },
-  })
-
-  vim.keymap.set("n", "dm", delete_marks_command, { desc = "Delete a mark" })
+  vim.keymap.set("n", "dm", function()
+    signs.delete_marks_command(config)
+  end, { desc = "Deletes a mark" })
 end
 
 return M
