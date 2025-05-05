@@ -7,6 +7,7 @@ local signs = require("marker.signs")
 --- @class Marker.config Configuration for marker.nvim
 --- @field highlight_style vim.api.keyset.highlight The Vim highlight group used to highlight marks.
 --- @field mark_regex string Used to specify which marks are shown with signs.
+--- @field keys Marker.config.keys Used to define keybindings
 local DefaultConfig = {
   --- By default we want all marks that are alphabetical to show up...
   --- @see https://www.lua.org/pil/20.2.html
@@ -16,6 +17,11 @@ local DefaultConfig = {
     fg = nil,
     bold = false,
     italic = true,
+  },
+  --- @class Marker.config.keys
+  --- @field delete_mark string The keybinding to delete a mark
+  keys = {
+    delete_mark = "dm",
   },
 }
 
@@ -46,7 +52,7 @@ M.setup = function(config)
     end,
   })
 
-  vim.keymap.set("n", "dm", function()
+  vim.keymap.set("n", config.keys.delete_mark, function()
     signs.delete_marks_command(config)
   end, { desc = "Deletes a mark" })
 end
