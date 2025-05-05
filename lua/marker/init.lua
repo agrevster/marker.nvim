@@ -1,4 +1,4 @@
---- A friendly NeoVim plugin that shows were marks are.
+--- A friendly NeoVim plugin that shows where marks are.
 --- @module Marker
 local M = {}
 
