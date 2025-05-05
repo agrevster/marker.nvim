@@ -7,7 +7,7 @@ local signs = require("marker.signs")
 --- @class Marker.config Configuration for marker.nvim
 --- @field highlight_style vim.api.keyset.highlight The Vim highlight group used to highlight marks.
 --- @field mark_regex string Used to specify which marks are shown with signs.
-local DeafultConfig = {
+local DefaultConfig = {
   --- By default we want all marks that are alphabetical to show up...
   --- @see https://www.lua.org/pil/20.2.html
   mark_regex = "%a",
@@ -23,7 +23,7 @@ local DeafultConfig = {
 M.setup = function(config)
   -- If the config isn't defined we can use the default one
   if config == nil then
-    config = DeafultConfig
+    config = DefaultConfig
   end
   vim.api.nvim_create_augroup("Marker", { clear = true })
 
